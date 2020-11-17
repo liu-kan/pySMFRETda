@@ -1,5 +1,6 @@
 # pySMFRETda
-pySMFRETda is a set of Python toolbox to help you preparing hdf5 data file and serving as a  parameter server for running [gSMFRETda](https://github.com/liu-kan/gSMFRETda)
+pySMFRETda is demonstration app of the parameter server implementation for [gSMFRETda](https://github.com/liu-kan/gSMFRETda).
+It contains a set of Python tools to help you preparing hdf5 data file and serving as a parameter server for running [gSMFRETda](https://github.com/liu-kan/gSMFRETda).
 
 ## Install
 ```bash
