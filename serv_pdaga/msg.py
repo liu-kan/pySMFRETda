@@ -35,7 +35,7 @@ class paramsServ():
         pb_sid=args_pb2.p_sid()
         pb_sid.sid=0
         clients=dict()
-        # clients_lastTimeS=dict()
+        bestcs=3.2E32        
         while(running):
             # print("loop start")
             if stopflag.value>1:
@@ -57,7 +57,7 @@ class paramsServ():
                 ii=-1
                 ind_=[]
                 try:
-                    ii , ind_ = qO.get(False) #TODO change proto to allow ord('p') fail and retry later.
+                    ii , ind_ , bestcs= qO.get(False) #TODO change proto to allow ord('p') fail and retry later.
                 except queue.Empty:
                     # print("params no ready")
                     pb_ga.idx=-1
@@ -65,6 +65,7 @@ class paramsServ():
                     continue
                 # ind_=[random.random()]*(s_n*(s_n+1))
                 pb_ga.idx=ii
+                pb_ga.hist=bestcs
                 for i in range(s_n):
                     pb_ga.params.append(ind_[i])
                 for i in range(s_n*s_n-s_n):
@@ -92,12 +93,12 @@ class paramsServ():
                 s1.send(pb_sid.SerializeToString())
                 # print("pb_sid send",pb_sid.sid, " ridx: ",res.ridx)
                 if res.idx in clients:
-                    clients[res.idx].updateRunTime()                
+                    clients[res.idx].updateRunTime()              
                 qN.put((res.ridx,res.e)) 
             elif recvstr[0]==ord('k'):
-                pidx=args_pb2.p_n()
+                pidx=args_pb2.p_sid()
                 pidx.ParseFromString(recvstr[1:])
-                # print("keepalive: ",pidx.s_n)
+                # print("keepalive: ",pidx.sid)
                 s1.send('l')
             else:
                 print("Err recv: ",recvstr[0])
