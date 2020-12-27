@@ -11,6 +11,8 @@ sudo dnf install protobuf-devel hdf5-devel nanomsg-devel python3-protobuf python
 #endif
 pip3 install --user -r requirements.txt
 ```
+For windows installation, go to [INSTALL_WIN.md](INSTALL_WIN.md).
+
 ##  Prepare data for gSMFRETda
 
 ```bash
@@ -34,7 +36,7 @@ Traceback (most recent call last):
     from matplotlib.mlab import normpdf
 ImportError: cannot import name 'normpdf' from 'matplotlib.mlab' (/home/liuk/miniconda3/envs/gSMFRETda/lib/python3.7/site-packages/matplotlib/mlab.py)
 ```
-Build FRETBursts from my repository.
+Build [FRETBursts](https://github.com/OpenSMFS/FRETBursts) from [@tritemio](https://github.com/tritemio) in [my repository](https://github.com/liu-kan/FRETBursts), which replace mpl.normpdf with scipy.stats.norm.pdf.
 ```bash
 pip3 uninstall fretbursts # or conda uninstall fretbursts
 git clone --depth=1 https://github.com/liu-kan/FRETBursts.git

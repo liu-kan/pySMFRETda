@@ -1,6 +1,7 @@
 import sys
 eps=sys.float_info.epsilon
 import random
+
 def checkBounds(min, max):
     def decorator(func):
         def wrapper(*args, **kargs):
@@ -20,6 +21,20 @@ def checkBounds(min, max):
             return offspring
         return wrapper
     return decorator
+
+def fixBounds(child, min, max):
+    for i in range(len(child)):
+        if child[i] > max[i]:
+            if random.random()<0.8:
+                child[i] = max[i]- ((child[i] - max[i]) % (max[i]-min[i]))
+            else:
+                child[i] = max[i]-eps*random.randint(1,1e10) # eps ~ 1e-16 * e10 -> \us
+        elif child[i] < min[i]:
+            if random.random()<0.8:
+                child[i] = min[i]+ (( min[i]-child[i]) % (max[i]-min[i]))
+            else:
+                child[i] = min[i]+eps*random.randint(1,1e10) # eps ~ 1e-16 * e10 -> \us                            
+
 
 def checkList0(n,list0):
     if n <=0 or type(n)!=int:

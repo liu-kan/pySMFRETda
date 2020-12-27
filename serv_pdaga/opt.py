@@ -1,8 +1,9 @@
-import random,array
+import random,array,signal
 from timeit import default_timer as timer
 from deap import base, creator, tools
 
 from opt_helper import *
+from opt_const import *
 class opt_toobox():        
     def __init__(self,s_n,k_zero_list):
         self.k_zero=k_zero_list
@@ -19,44 +20,53 @@ class opt_toobox():
         creator.create("Individual", list, fitness=creator.FitnessMin)
         
         self.toolbox = base.Toolbox()
-        FLT_MIN_E, FLT_MAX_E = 0.01, 0.99
-        FLT_MIN_K, FLT_MAX_K = 0, 100000
-        FLT_MIN_V, FLT_MAX_V = 0, 100
+        # self.toolbox.register("map", futures.map)
+        FLT_MIN_E, FLT_MAX_E = MIN_E, MAX_E
+        FLT_MIN_K, FLT_MAX_K = MIN_K, MAX_K
+        FLT_MIN_V, FLT_MAX_V = MIN_V, MAX_V
         self.s_n = s_n
         self.toolbox.register("attr_flt", random.random)
         self.toolbox.register("attr_flt_k", random.uniform, FLT_MIN_K, FLT_MAX_K)
         self.toolbox.register("attr_flt_v", random.uniform, FLT_MIN_V, FLT_MAX_V)
         ind_type=[]
-        ind_range_max=[]
-        ind_range_min=[]
         for _ in range(s_n):
             ind_type.append(self.toolbox.attr_flt)
-            ind_range_max.append(FLT_MAX_E)
-            ind_range_min.append(FLT_MIN_E)
         for _ in range(s_n*(s_n-1)-self.zero_len):
             ind_type.append(self.toolbox.attr_flt_k)
-            ind_range_max.append(FLT_MAX_K)
-            ind_range_min.append(FLT_MIN_K)
         for _ in range(s_n):
-            ind_type.append(self.toolbox.attr_flt_v)      
-            ind_range_max.append(FLT_MAX_V) 
-            ind_range_min.append(FLT_MIN_V)
+            ind_type.append(self.toolbox.attr_flt_v)
         self.toolbox.register("individual", tools.initCycle, creator.Individual,
                         tuple(ind_type), n=1)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
         self.toolbox.register("mate", tools.cxTwoPoint)
         self.toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.2)
         self.toolbox.register("select", tools.selTournament, tournsize=3)
-        self.toolbox.decorate("mate", checkBounds(ind_range_min, ind_range_max))
-        self.toolbox.decorate("mutate", checkBounds(ind_range_min, ind_range_max))
-    def run(self,stopflag,q,ind_num=0,NGEN=1000,CXPB=0.45,MUTPB=0.45,topNum=5):
+        # self.toolbox.decorate("mate", checkBounds(ind_range_min, ind_range_max))
+        # self.toolbox.decorate("mutate", checkBounds(ind_range_min, ind_range_max))        
+    def run(self,stopflag,q,ind_num=0,NGEN=n_gen,CXPB=cxpb,MUTPB=mutpb,topNum=top_num):
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         self.ind_num=ind_num
         qO,qN=q
+        s_n=self.s_n
         if ind_num==0:
-            self.ind_num=20*self.s_n*(self.s_n+1)
+            self.ind_num=20*s_n*(s_n+1)
         running=True
         pop=self.toolbox.population(n=self.ind_num)
         bestcs=3.2E32
+        FLT_MIN_E, FLT_MAX_E = MIN_E, MAX_E
+        FLT_MIN_K, FLT_MAX_K = MIN_K, MAX_K
+        FLT_MIN_V, FLT_MAX_V = MIN_V, MAX_V
+        ind_range_max=[]
+        ind_range_min=[]
+        for _ in range(s_n):
+            ind_range_max.append(FLT_MAX_E)
+            ind_range_min.append(FLT_MIN_E)
+        for _ in range(s_n*(s_n-1)-self.zero_len):
+            ind_range_max.append(FLT_MAX_K)
+            ind_range_min.append(FLT_MIN_K)
+        for _ in range(s_n):
+            ind_range_max.append(FLT_MAX_V) 
+            ind_range_min.append(FLT_MIN_V)        
         for gen in range(NGEN):
             # Select the next generation individuals
             tops=tools.selBest(pop, topNum)
@@ -70,12 +80,15 @@ class opt_toobox():
             for child1, child2 in zip(offspring[::2], offspring[1::2]):
                 if random.random() < CXPB:
                     self.toolbox.mate(child1, child2)
+                    fixBounds(child1,ind_range_min, ind_range_max)
+                    fixBounds(child2,ind_range_min, ind_range_max)
                     del child1.fitness.values
                     del child2.fitness.values
             # Apply mutation on the offspring
             for mutant in offspring:
                 if random.random() < MUTPB:
                     self.toolbox.mutate(mutant)
+                    fixBounds(mutant,ind_range_min, ind_range_max)                    
                     del mutant.fitness.values
             for tInd in tops:
                 offspring.append(self.toolbox.clone(tInd))
@@ -117,7 +130,7 @@ class opt_toobox():
             print("Gen ",gen," , best chisq: ", bestcs)
         # connOpt.close()
         print("Top 3 result:")
-        top3=tools.selBest(pop, 3)
+        top3=tools.selBest(pop, topNum)
         for t in top3:            
             print(genRealInd(self.s_n,t,self.k_zero))
 

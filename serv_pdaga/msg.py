@@ -1,8 +1,9 @@
-import time,threading,os
+import time,os
 import queue 
 import random
 from nanomsg import Socket, REP
 from protobuf import args_pb2
+import signal,sys
 class gpuClient:
     runTime=99999.9
     timeStamp=-1
@@ -15,10 +16,12 @@ class gpuClient:
         self.timeStamp=time.perf_counter()
 
 class paramsServ():
-    def __init__(self, port,s_n):
+    def __init__(self, port,s_n,pid):
         self.port=port
         self.s_n=s_n
+        self.ppid=pid
     def run(self,stopflag,q):
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         qO,qN=q
         print('tcp://*:'+self.port)
         s1 = Socket(REP)
@@ -35,12 +38,28 @@ class paramsServ():
         pb_sid=args_pb2.p_sid()
         pb_sid.sid=0
         clients=dict()
-        bestcs=3.2E32        
+        bestcs=3.2E32
+        sys_platform=sys.platform
         while(running):
             # print("loop start")
             if stopflag.value>1:
                 running=False
                 break
+            # if sys_platform == 'win32':
+            #     try:
+            #         recvstr=s1.recv()
+            #     except KeyboardInterrupt:
+            #         if stopflag.value==0:
+            #             stopflag.value=1
+            #             recvstr=s1.recv()
+            #         elif stopflag.value>0:
+            #             with stopflag.get_lock():
+            #                 stopflag.value+=1
+            #             running=False
+            #             # os.kill(self.ppid, signal.CTRL_C_EVENT)
+                    
+            # else:
+            #     recvstr=s1.recv()
             recvstr=s1.recv()
             # print(ord('c'),ord('p'),ord('r'),ord('k'),"recvstr[0]: ",recvstr[0])
             if recvstr[0]==ord('c'):
@@ -77,6 +96,7 @@ class paramsServ():
                 # print("p: ",clients_lastTimeS[pb_ga.idx])
                 if pb_gpuid.str not in clients:
                     clients[pb_gpuid.str]=gpuClient()
+                    print(pb_gpuid.str," connected.")
                 else:
                     clients[pb_gpuid.str].updateTimeStamp()
             elif recvstr[0]==ord('r'):
@@ -88,7 +108,7 @@ class paramsServ():
                     print("time spend: ",clients.pop(res.idx).runTime)
                     if len(clients.keys())<=0:
                         running=False
-                    print("stopflag: ",stopflag.value)
+                    # print("stopflag: ",stopflag.value)
                     # s1.close() 
                 s1.send(pb_sid.SerializeToString())
                 # print("pb_sid send",pb_sid.sid, " ridx: ",res.ridx)
