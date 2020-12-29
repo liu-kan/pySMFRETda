@@ -53,4 +53,10 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, original_sigint_handler)
     signal.signal(signal.SIGINT, exit_handler)
     paramsServ_p.join()
-    optBox_p.join()
+    print("paramsServ_p joined")
+    if sys.platform == 'win32':
+        optBox_p.terminate()
+        print("optBox_p terminate")
+    else:
+        optBox_p.join()
+        print("optBox_p joined")

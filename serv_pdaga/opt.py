@@ -1,7 +1,6 @@
-import random,array,signal
+import random,array,queue 
 from timeit import default_timer as timer
 from deap import base, creator, tools
-
 from opt_helper import *
 from opt_const import *
 class opt_toobox():        
@@ -18,9 +17,7 @@ class opt_toobox():
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         # creator.create("Individual", array.array, typecode="d", fitness=creator.FitnessMin)
         creator.create("Individual", list, fitness=creator.FitnessMin)
-        
         self.toolbox = base.Toolbox()
-        # self.toolbox.register("map", futures.map)
         FLT_MIN_E, FLT_MAX_E = MIN_E, MAX_E
         FLT_MIN_K, FLT_MAX_K = MIN_K, MAX_K
         FLT_MIN_V, FLT_MAX_V = MIN_V, MAX_V
@@ -41,10 +38,7 @@ class opt_toobox():
         self.toolbox.register("mate", tools.cxTwoPoint)
         self.toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.2)
         self.toolbox.register("select", tools.selTournament, tournsize=3)
-        # self.toolbox.decorate("mate", checkBounds(ind_range_min, ind_range_max))
-        # self.toolbox.decorate("mutate", checkBounds(ind_range_min, ind_range_max))        
     def run(self,stopflag,q,ind_num=0,NGEN=n_gen,CXPB=cxpb,MUTPB=mutpb,topNum=top_num):
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
         self.ind_num=ind_num
         qO,qN=q
         s_n=self.s_n
@@ -95,44 +89,40 @@ class opt_toobox():
             # # Evaluate the individuals with an invalid fitness
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
             count=len(invalid_ind)
-            print("sent count: ",count)
             for i in range(count):
-                if stopflag.value>=1:
-                    running=False
-                    break
-                realInd=genRealInd(self.s_n,invalid_ind[i],self.k_zero)
-                
+                realInd=genRealInd(self.s_n,invalid_ind[i],self.k_zero)                
                 ## qO.put() put compute parameter sets to the parameters sending queue.
                 ## you should keep it in you own algorithm                 
                 qO.put((i,realInd,bestcs))
-
             # The population is entirely replaced by the offspring
             count_r=0
-            for _ in range(count):
+            while count_r < count:
                 if stopflag.value>=1:
+                    print("opt Ending get fit loop!")
                     running=False
                     break
                 ## qN.get() get compute result of each parameter set
                 ## you should keep it in you own algorithm
-                ii , ind_fit = qN.get()
-                count_r=count_r+1
-                # print("recv idx: ",ii, " tot_recv: ",count_r," ind_fit: ",ind_fit) 
-                invalid_ind[ii].fitness.values=(ind_fit,)
-            
+                try:
+                    ii , ind_fit = qN.get(False)
+                    count_r=count_r+1
+                    invalid_ind[ii].fitness.values=(ind_fit,)
+                except queue.Empty:
+                    continue
+                except ( ValueError, OSError) as e:
+                    running=False
+                    print("qN.get(False) Error:",e)
+                    break                    
             if not running or stopflag.value>=1:
+                print("opt Ending opt loop!")
                 break
             pop[:] = offspring            
             for oi in offspring:
-                # print(gen, " oi.fitness.values",oi.fitness.values)
                 if (oi.fitness.valid):
                     if (oi.fitness.values[0])<bestcs:
                         bestcs=(oi.fitness.values[0])
             print("Gen ",gen," , best chisq: ", bestcs)
-        # connOpt.close()
-        print("Top 3 result:")
+        print("Top ",topNum," result:")
         top3=tools.selBest(pop, topNum)
         for t in top3:            
             print(genRealInd(self.s_n,t,self.k_zero))
-
-if __name__ == '__main__':
-    pass

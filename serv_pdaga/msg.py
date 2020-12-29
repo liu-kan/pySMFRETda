@@ -21,12 +21,12 @@ class paramsServ():
         self.s_n=s_n
         self.ppid=pid
     def run(self,stopflag,q):
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        # signal.signal(signal.SIGINT, signal.SIG_IGN)
         qO,qN=q
         print('tcp://*:'+self.port)
         s1 = Socket(REP)
-        s1.recv_buffer_size=1024*1024
-        s1.reconnect_interval_max=1000
+        # s1.recv_buffer_size=1024*1024
+        # s1.reconnect_interval_max=1000
         s1.bind('tcp://*:'+self.port)    
         pb_n=args_pb2.p_n()
         s_n=self.s_n
@@ -45,22 +45,21 @@ class paramsServ():
             if stopflag.value>1:
                 running=False
                 break
-            # if sys_platform == 'win32':
-            #     try:
-            #         recvstr=s1.recv()
-            #     except KeyboardInterrupt:
-            #         if stopflag.value==0:
-            #             stopflag.value=1
-            #             recvstr=s1.recv()
-            #         elif stopflag.value>0:
-            #             with stopflag.get_lock():
-            #                 stopflag.value+=1
-            #             running=False
-            #             # os.kill(self.ppid, signal.CTRL_C_EVENT)
-                    
-            # else:
-            #     recvstr=s1.recv()
-            recvstr=s1.recv()
+            if sys_platform == 'win32':
+                try:
+                    recvstr=s1.recv()
+                except KeyboardInterrupt:
+                    if len(clients.keys())<=0:
+                        running=False                        
+                    elif stopflag.value>=0:
+                        print("stopflag.value: ",stopflag.value)
+                        with stopflag.get_lock():
+                            stopflag.value+=1
+                        continue             
+                        # os.kill(self.ppid, signal.CTRL_C_EVENT)                    
+            else:
+                recvstr=s1.recv()
+            # recvstr=s1.recv()
             # print(ord('c'),ord('p'),ord('r'),ord('k'),"recvstr[0]: ",recvstr[0])
             if recvstr[0]==ord('c'):
                 pb_cap=args_pb2.p_cap()
@@ -123,3 +122,6 @@ class paramsServ():
             else:
                 print("Err recv: ",recvstr[0])
         s1.close()
+        qN.close()
+        qN.join_thread()
+        print("paramsServ done!")

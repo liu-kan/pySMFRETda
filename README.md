@@ -4,7 +4,7 @@ It contains a set of Python tools to help you preparing hdf5 data file and servi
 
 ## Install
 ```bash
-#if ubuntu
+#if debian or ubuntu
 sudo apt install build-essential libhdf5-dev pkg-config protobuf-compiler libprotobuf-dev libnanomsg-dev
 #elif centos or redhat
 sudo dnf install protobuf-devel hdf5-devel nanomsg-devel python3-protobuf python3-devel 
