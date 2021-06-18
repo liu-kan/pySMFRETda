@@ -1,0 +1,1 @@
+pyinstaller.exe --onefile --hidden-import=_nanomsg_ctypes --hidden-import=_nanomsg_cpy --icon=ui\gsmfretda_icons_16-256.ico -w pdaServ.py

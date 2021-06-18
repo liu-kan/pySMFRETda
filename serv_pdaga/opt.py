@@ -1,8 +1,8 @@
 import random,array,queue 
 from timeit import default_timer as timer
 from deap import base, creator, tools
-from opt_helper import *
-from opt_const import *
+from .opt_helper import *
+from .opt_const import *
 class opt_toobox():        
     def __init__(self,s_n,k_zero_list):
         self.k_zero=k_zero_list

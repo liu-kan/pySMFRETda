@@ -1,6 +1,7 @@
 import sys
 eps=sys.float_info.epsilon
-import random
+import random,numbers
+from typing import List,Any
 
 def checkBounds(min, max):
     def decorator(func):
@@ -39,6 +40,8 @@ def fixBounds(child, min, max):
 def checkList0(n,list0):
     if n <=0 or type(n)!=int:
         return False
+    if len(list0)==0:
+        return True
     list0.sort()
     if list0[0]<=1:
         return False
@@ -47,7 +50,21 @@ def checkList0(n,list0):
     return True
 
 
-def genRealInd(n,gaInd,list0):
+def genRealInd(n: int,gaInd: List[numbers.Real],list0: List[int]) -> List[numbers.Real]:
+    '''Genrate real ind from GA to the real model
+
+    @type n: int
+    @param n: n is number of states
+
+    @type gaInd: List[numbers.Real]
+    @param gaInd: gaInd ind in GA
+
+    @type list0: List[int]
+    @param list0: which elements are 0 in rate matrix
+
+    @rtype: List[numbers.Real]
+    @return: Returns parameters really used in the model
+    '''
     if len(list0)==0:
         return gaInd
     idxRow=0

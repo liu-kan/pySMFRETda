@@ -2,8 +2,9 @@ import time,os
 import queue 
 import random
 from nanomsg import Socket, REP
-from protobuf import args_pb2
+from .protobuf import args_pb2
 import signal,sys
+
 class gpuClient:
     runTime=99999.9
     timeStamp=-1
@@ -16,10 +17,11 @@ class gpuClient:
         self.timeStamp=time.perf_counter()
 
 class paramsServ():
-    def __init__(self, port,s_n,pid):
+    def __init__(self, port: str ,s_n: int ,pid: int =None):
         self.port=port
         self.s_n=s_n
         self.ppid=pid
+        print("paramsServ init with s_n",s_n,"port ",port)
     def run(self,stopflag,q):
         # signal.signal(signal.SIGINT, signal.SIG_IGN)
         qO,qN=q
@@ -68,7 +70,8 @@ class paramsServ():
                 s1.send(pb_n.SerializeToString())
             elif recvstr[0]==ord('p'):
                 pb_gpuid=args_pb2.p_str()
-                pb_gpuid.ParseFromString(recvstr[1:])                
+                pb_gpuid.ParseFromString(recvstr[1:])
+                # TODO 解析  p_str get ohist           
                 pb_ga=args_pb2.p_ga()
                 pb_ga.start=0
                 pb_ga.stop=-1
@@ -112,7 +115,8 @@ class paramsServ():
                 s1.send(pb_sid.SerializeToString())
                 # print("pb_sid send",pb_sid.sid, " ridx: ",res.ridx)
                 if res.idx in clients:
-                    clients[res.idx].updateRunTime()              
+                    clients[res.idx].updateRunTime()
+                #TODO 解析res get shist           
                 qN.put((res.ridx,res.e)) 
             elif recvstr[0]==ord('k'):
                 pidx=args_pb2.p_sid()

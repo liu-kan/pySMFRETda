@@ -63,17 +63,19 @@ python setup.py build_ext --inplace --compiler=msvc
 python setup.py install
 ```
 
-### deap (VC++)
+### deap (VC++) and DearPyGUI
 * Clone [a patched deap](https://github.com/liu-kan/deap) branch, which has merge [PR 76](https://github.com/DEAP/deap/pull/76) from [@cmd-ntrf](https://github.com/cmd-ntrf)
 * Install deap in Anaconda Command Prompt with pyda environment, by
 ```bash
 python setup.py install
+pip install dearpygui
 ```
 ---------------------------------------------------
 ## FRETBursts (only if you use untils/*.py)
 Build [FRETBursts](https://github.com/OpenSMFS/FRETBursts) from [@tritemio](https://github.com/tritemio) in [my repository](https://github.com/liu-kan/FRETBursts), which replace mpl.normpdf with scipy.stats.norm.pdf.
 ```bash
 pip3 uninstall fretbursts # or conda uninstall fretbursts
+conda install -c anaconda pytables
 git clone --depth=1 https://github.com/liu-kan/FRETBursts.git
 cd FRETBursts
 python3 setup.py build
