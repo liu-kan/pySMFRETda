@@ -1,6 +1,6 @@
 from scipy.io import loadmat
 import numpy as np
-
+import queue
 from dearpygui.core import *
 from dearpygui.simple import *
 # add_additional_font("ui/NotoSansSC-Regular.otf", 20, glyph_ranges="chinese_full")
@@ -8,27 +8,30 @@ from serv_pdaga.msg import paramsServ
 from serv_pdaga.opt import opt_toobox
 from multiprocessing import Process,Value
 import time,multiprocessing,threading,sys
+import time, datetime
 
 class pServGui:
-    def __init__(self,mainWinW=1550,mainWinH=900):
+
+    def __init__(self,mainWinW=1024,mainWinH=760,lPad=2):
         self.logID="xSMFRETda conosle"
+        self.lPad=lPad
         self.statesNum=2        
         self.mainWinH=mainWinH
         self.mainWinW=mainWinW
         set_main_window_size(self.mainWinW,self.mainWinH )
         qO  = multiprocessing.Queue()
         qN = multiprocessing.Queue()
-        self.q=(qO,qN)
+        self.qD = multiprocessing.Queue()
+        self.q=(qO,qN,self.qD)
         self.stopFlag = Value('b', 0)
         self.joined=False
+        self.render_counter=0
+        self.histNum=0
+        self.fitGoodTime=600
+        self.tzoffset = time.timezone if (time.localtime().tm_isdst == 0) else time.altzone
+        self.bestf=[]
+        self.timelist=[]        
 
-        x = loadmat('ui/xj.mat')
-        hist, bin_edges = np.histogram(x['x'],100)
-        self.hist=hist
-        self.bin_edges=bin_edges
-        self.hist1=self.hist+np.random.rand(1,self.hist.size)*np.mean(self.hist)*.1
-
-        
     def get_ke_zero(self):
         ke_zero=[]
         for i in range(self.statesNum):
@@ -89,7 +92,7 @@ class pServGui:
         
     def joinProcesses(self):
         while not self.joined:
-            log_debug("joinning",logger=self.logID)
+            # log_debug("joinning",logger=self.logID)
             self.paramsServ_p.join(1)
             if self.paramsServ_p.exitcode is not None:
                 print("paramsServ_p joined")
@@ -105,7 +108,7 @@ class pServGui:
                         self.joined=True
             time.sleep(1)
 
-
+    '''
     def query(self,sender, data):
         show_item("Plot Window")
         set_plot_xlimits("Plot2", data[0], data[1])
@@ -121,7 +124,8 @@ class pServGui:
         ht=get_item_configuration("k_ij_table")
         print(ht)
         configure_item("k_ij_table", hide_headers=not ht['hide_headers'])
-        
+    '''
+
     def rateMat_callback(self,sender, data):
         if get_value(sender):
             # ol=get_item_label(sender)
@@ -168,13 +172,57 @@ class pServGui:
             set_window_pos("log_window",0,H)
             set_item_height("log_window",self.mainWinH-H-50)
 
+    def drawHist(self):
+        '''
+        qD=(ii,histList)
+        ii = 0 no data
+        ii = 1 histList has mcHist
+        ii > 1 histList has oHist , ii = histNum
+        '''
+        ii=0
+        bestcs=3.2E32
+        try:
+            ii , bestcs, histList = self.qD.get(False)
+            # print(bestcs)
+        except queue.Empty:
+            return
+        clear_plot("Fittness")
+        if ii>0:
+            if self.histNum!=ii:
+                self.histNum=ii-self.lPad
+                self.bin_edges=np.linspace(0,1.0,ii)[self.lPad:]
+            self.oHist=histList[self.lPad:]
+            add_shade_series("Fittness","FRET data",self.bin_edges.tolist(),self.oHist)  
+            self.bestf.clear()
+            self.timelist.clear()
+            dtime = datetime.datetime.now()
+            localts=time.mktime(dtime.timetuple())-self.tzoffset            
+            set_plot_xlimits("Fit_Goodness",localts,localts+60*2)
+        elif ii==-1:
+            clear_plot("Fit_Goodness")
+            dtime = datetime.datetime.now()                      
+            localts=time.mktime(dtime.timetuple())-self.tzoffset
+            self.timelist.append( localts)
+            add_shade_series("Fittness","FRET data",self.bin_edges.tolist(),self.oHist)
+            add_line_series("Fittness","Simulation data",self.bin_edges.tolist(),histList[self.lPad:],
+                        color=(1, 1, 1, -1),weight=2) 
+            self.bestf.append(bestcs)
+            print(len(self.timelist))
+            print(self.bestf)            
+            set_plot_xlimits("Fit_Goodness",self.timelist[0],self.timelist[-1]+60)
+            set_plot_ylimits("Fit_Goodness",min(self.bestf),max(self.bestf))
+            add_line_series("Fit_Goodness","Fit Goodness",self.timelist,self.bestf,
+                        color=(255, 255, 0),weight=3)             
+    def render_timer(self,sender,data):
+        self.render_counter=self.render_counter+1
+        if self.render_counter %30==0:
+            self.drawHist()
+
     def showGUI(self):
-        with window("fit_Window",width=800,height=700,x_pos=232,y_pos=0):            
+        with window("fit_Window",width=777,height=450,x_pos=232,y_pos=0):            
             add_plot("Fittness", height=-1)
-            add_shade_series("Fittness","FRET",self.bin_edges[1:].tolist(),self.hist.tolist())
-            print(len(self.bin_edges[1:].tolist()),len(self.hist1.tolist()))
-            add_line_series("Fittness","Fittness",self.bin_edges[1:].tolist(),self.hist1.tolist()[0],
-                            color=(1, 1, 1, -1),weight=2)
+        with window("fitGoodness_Window",width=777,height=255,x_pos=232,y_pos=453):
+            add_plot("Fit_Goodness", height=-1,xaxis_time=True)
 
         with window("log_window",width=230):
             add_logger(self.logID,autosize_x=True,autosize_y=True)
@@ -213,7 +261,5 @@ class pServGui:
         enable_docking(shift_only=True,dock_space=True)
         # start_dearpygui(primary_window="Main Window")
         self.moveLoggerWindow(True)
+        set_render_callback(self.render_timer)
         start_dearpygui()
-
-
-

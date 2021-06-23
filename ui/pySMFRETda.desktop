@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Name=pySMFRETda
+Comment=pySMFRETda
+Exec=bash -c 'cd /home/liuk/sync/d1/projs/pySMFRETda && python3 /home/liuk/sync/d1/projs/pySMFRETda/pdaServ.py --gui'
+Icon=/home/liuk/sync/d1/projs/gSMFRETda/resources/gSMFRETda_icons512.png
+Type=Application
+Categories=Science;Application;Biology;Physics;

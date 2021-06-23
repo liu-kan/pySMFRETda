@@ -21,10 +21,12 @@ class paramsServ():
         self.port=port
         self.s_n=s_n
         self.ppid=pid
+        self.bestcs=3.2E32
         print("paramsServ init with s_n",s_n,"port ",port)
+        self.counter=0
     def run(self,stopflag,q):
         # signal.signal(signal.SIGINT, signal.SIG_IGN)
-        qO,qN=q
+        qO,qN,qD=q
         print('tcp://*:'+self.port)
         s1 = Socket(REP)
         # s1.recv_buffer_size=1024*1024
@@ -39,8 +41,7 @@ class paramsServ():
         running=True
         pb_sid=args_pb2.p_sid()
         pb_sid.sid=0
-        clients=dict()
-        bestcs=3.2E32
+        clients=dict()        
         sys_platform=sys.platform
         while(running):
             # print("loop start")
@@ -71,14 +72,17 @@ class paramsServ():
             elif recvstr[0]==ord('p'):
                 pb_gpuid=args_pb2.p_str()
                 pb_gpuid.ParseFromString(recvstr[1:])
-                # TODO 解析  p_str get ohist           
+                # TODO 解析  p_str get ohist
+                if pb_gpuid.histNum>0:
+                    # print(list(pb_gpuid.ohist))
+                    qD.put((pb_gpuid.histNum,self.bestcs,list(pb_gpuid.ohist)))                    
                 pb_ga=args_pb2.p_ga()
                 pb_ga.start=0
                 pb_ga.stop=-1
                 ii=-1
                 ind_=[]
                 try:
-                    ii , ind_ , bestcs= qO.get(False) #TODO change proto to allow ord('p') fail and retry later.
+                    ii , ind_ , self.bestcs= qO.get(False) #TODO change proto to allow ord('p') fail and retry later.                    
                 except queue.Empty:
                     # print("params no ready")
                     pb_ga.idx=-1
@@ -86,7 +90,7 @@ class paramsServ():
                     continue
                 # ind_=[random.random()]*(s_n*(s_n+1))
                 pb_ga.idx=ii
-                pb_ga.hist=bestcs
+                pb_ga.bestfv=self.bestcs
                 for i in range(s_n):
                     pb_ga.params.append(ind_[i])
                 for i in range(s_n*s_n-s_n):
@@ -117,7 +121,13 @@ class paramsServ():
                 if res.idx in clients:
                     clients[res.idx].updateRunTime()
                 #TODO 解析res get shist           
-                qN.put((res.ridx,res.e)) 
+                qN.put((res.ridx,res.e))
+                if res.hist:
+                    # self.counter=self.counter+1
+                    # print(self.counter,self.bestcs)
+                    if self.bestcs<3.2E31:
+                        qD.put((-1,self.bestcs,list(res.shist)))
+                    
             elif recvstr[0]==ord('k'):
                 pidx=args_pb2.p_sid()
                 pidx.ParseFromString(recvstr[1:])
@@ -127,5 +137,7 @@ class paramsServ():
                 print("Err recv: ",recvstr[0])
         s1.close()
         qN.close()
+        qD.close()
         qN.join_thread()
+        qD.join_thread()
         print("paramsServ done!")

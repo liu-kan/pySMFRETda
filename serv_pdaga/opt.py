@@ -38,15 +38,15 @@ class opt_toobox():
         self.toolbox.register("mate", tools.cxTwoPoint)
         self.toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.2)
         self.toolbox.register("select", tools.selTournament, tournsize=3)
+        self.bestcs=3.2E32
     def run(self,stopflag,q,ind_num=0,NGEN=n_gen,CXPB=cxpb,MUTPB=mutpb,topNum=top_num):
         self.ind_num=ind_num
-        qO,qN=q
+        qO,qN,_=q
         s_n=self.s_n
         if ind_num==0:
             self.ind_num=20*s_n*(s_n+1)
         running=True
-        pop=self.toolbox.population(n=self.ind_num)
-        bestcs=3.2E32
+        pop=self.toolbox.population(n=self.ind_num)        
         FLT_MIN_E, FLT_MAX_E = MIN_E, MAX_E
         FLT_MIN_K, FLT_MAX_K = MIN_K, MAX_K
         FLT_MIN_V, FLT_MAX_V = MIN_V, MAX_V
@@ -93,7 +93,7 @@ class opt_toobox():
                 realInd=genRealInd(self.s_n,invalid_ind[i],self.k_zero)                
                 ## qO.put() put compute parameter sets to the parameters sending queue.
                 ## you should keep it in you own algorithm                 
-                qO.put((i,realInd,bestcs))
+                qO.put((i,realInd,self.bestcs))
             # The population is entirely replaced by the offspring
             count_r=0
             while count_r < count:
@@ -119,9 +119,9 @@ class opt_toobox():
             pop[:] = offspring            
             for oi in offspring:
                 if (oi.fitness.valid):
-                    if (oi.fitness.values[0])<bestcs:
-                        bestcs=(oi.fitness.values[0])
-            print("Gen ",gen," , best chisq: ", bestcs)
+                    if (oi.fitness.values[0])<self.bestcs:
+                        self.bestcs=(oi.fitness.values[0])
+            print("Gen ",gen," , best chisq: ", self.bestcs)
         print("Top ",topNum," result:")
         top3=tools.selBest(pop, topNum)
         for t in top3:            
