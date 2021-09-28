@@ -49,6 +49,8 @@ def checkList0(n,list0):
         return False
     return True
 
+def betavariate_k(mink,maxk):
+    return random.betavariate( 2, 5)*(maxk-mink)+mink
 
 def genRealInd(n: int,gaInd: List[numbers.Real],list0: List[int]) -> List[numbers.Real]:
     '''Genrate real ind from GA to the real model

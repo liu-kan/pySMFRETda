@@ -26,6 +26,8 @@ if __name__ == '__main__':
     if sys.platform.startswith('win'):
     # On Windows calling this function is necessary.
         multiprocessing.freeze_support()
+    if sys.platform.startswith('darwin'):
+        multiprocessing.set_start_method("fork")
     stopFlag = Value('b', 0)
     args = cmdargs()
     if args.gui:
@@ -64,11 +66,26 @@ if __name__ == '__main__':
         paramsServ_p.start()
         signal.signal(signal.SIGINT, original_sigint_handler)
         signal.signal(signal.SIGINT, exit_handler)
-        paramsServ_p.join()
-        print("paramsServ_p joined")
-        if sys.platform == 'win32':
-            optBox_p.terminate()
-            print("optBox_p terminate")
-        else:
-            optBox_p.join()
-            print("optBox_p joined")
+        pJoined=False
+        oJoined=False
+        while not (oJoined or pJoined):
+            paramsServ_p.join(5)
+            if paramsServ_p.exitcode!=None:
+                pJoined=True
+            optBox_p.join(5)
+            if optBox_p.exitcode!=None:
+                oJoined=True
+        if not oJoined:
+            if sys.platform == 'win32':
+                optBox_p.terminate()
+                print("optBox_p terminate")
+            else:
+                optBox_p.join()
+                print("optBox_p joined")
+        if not pJoined:
+            if sys.platform == 'win32':
+                paramsServ_p.terminate()
+                print("paramsServ_p terminate")
+            else:
+                paramsServ_p.join()
+                print("paramsServ_p joined")

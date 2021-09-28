@@ -5,6 +5,7 @@ from .opt_helper import *
 from .opt_const import *
 class opt_toobox():        
     def __init__(self,s_n,k_zero_list):
+        random.seed()
         self.k_zero=k_zero_list
         self.zero_len=0
         if (k_zero_list!=None):
@@ -22,22 +23,35 @@ class opt_toobox():
         FLT_MIN_K, FLT_MAX_K = MIN_K, MAX_K
         FLT_MIN_V, FLT_MAX_V = MIN_V, MAX_V
         self.s_n = s_n
+        mutLow=[]
+        mutUp=[]
         self.toolbox.register("attr_flt", random.random)
         self.toolbox.register("attr_flt_k", random.uniform, FLT_MIN_K, FLT_MAX_K)
+        # self.toolbox.register("attr_flt_k", betavariate_k, FLT_MIN_K, FLT_MAX_K)
         self.toolbox.register("attr_flt_v", random.uniform, FLT_MIN_V, FLT_MAX_V)
         ind_type=[]
         for _ in range(s_n):
             ind_type.append(self.toolbox.attr_flt)
+            mutLow.append(MIN_E)
+            mutUp.append(MAX_E)
         for _ in range(s_n*(s_n-1)-self.zero_len):
             ind_type.append(self.toolbox.attr_flt_k)
+            mutLow.append(MIN_K)
+            mutUp.append(MAX_K)            
         for _ in range(s_n):
             ind_type.append(self.toolbox.attr_flt_v)
+            mutLow.append(MIN_V)
+            mutUp.append(MAX_V)            
         self.toolbox.register("individual", tools.initCycle, creator.Individual,
                         tuple(ind_type), n=1)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
-        self.toolbox.register("mate", tools.cxTwoPoint)
-        self.toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.2)
-        self.toolbox.register("select", tools.selTournament, tournsize=3)
+        # self.toolbox.register("mate", tools.cxTwoPoint)
+        self.toolbox.register("mate", tools.cxBlend, alpha=0.32)
+        # self.toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.2)
+        self.toolbox.register("mutate", tools.mutPolynomialBounded, eta=20, low=mutLow, up=mutUp, indpb=0.2)        
+        # self.toolbox.register("select", tools.selBest)
+        # self.toolbox.register("select", tools.selSPEA2)        
+        self.toolbox.register("select", tools.selNSGA2)
         self.bestcs=3.2E32
     def run(self,stopflag,q,ind_num=0,NGEN=n_gen,CXPB=cxpb,MUTPB=mutpb,topNum=top_num):
         self.ind_num=ind_num
@@ -63,10 +77,10 @@ class opt_toobox():
             ind_range_min.append(FLT_MIN_V)        
         for gen in range(NGEN):
             # Select the next generation individuals
-            tops=tools.selBest(pop, topNum)
-            selNum=len(pop)-int(len(pop)/3)-topNum
+            # tops=tools.selBest(pop, topNum)
+            selNum=min(int(len(pop)*4/5),len(pop)-topNum)
             selected= self.toolbox.select(pop, selNum)
-            newRandPop=self.toolbox.population(n=len(pop)-selNum-topNum)
+            newRandPop=self.toolbox.population(n=len(pop)-selNum)
             selected.extend(newRandPop)
             # Clone the selected individuals
             offspring = [self.toolbox.clone(ind) for ind in selected]
@@ -82,10 +96,11 @@ class opt_toobox():
             for mutant in offspring:
                 if random.random() < MUTPB:
                     self.toolbox.mutate(mutant)
-                    fixBounds(mutant,ind_range_min, ind_range_max)                    
+                    # fixBounds(mutant,ind_range_min, ind_range_max)                    
                     del mutant.fitness.values
-            for tInd in tops:
-                offspring.append(self.toolbox.clone(tInd))
+            # for tInd in tops:
+            #     offspring.append(self.toolbox.clone(tInd))
+            # offspring.append(self.toolbox.clone(tops[0]))
             # # Evaluate the individuals with an invalid fitness
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
             count=len(invalid_ind)

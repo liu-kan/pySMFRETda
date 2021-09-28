@@ -81,3 +81,24 @@ cd FRETBursts
 python3 setup.py build
 python3 setup.py install
 ```
+
+## Other deps
+In the env of pyda, cd to the souce code dir of pySMFRETda, then
+```bash
+cd the_souce_code_dir_of_pySMFRETda
+pip install -U --user -r requirements.txt
+```
+
+## Start the the parameter server
+With gui
+```bash
+python pdaServ.py --gui
+```
+Without gui
+```bash
+python pdaServ.py 
+```
+For help
+```bash
+python pdaServ.py -h 
+```

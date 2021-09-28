@@ -1,4 +1,3 @@
-from scipy.io import loadmat
 import numpy as np
 import queue
 from dearpygui.core import *
@@ -91,23 +90,41 @@ class pServGui:
         self.joinThr.start()
         
     def joinProcesses(self):
+        pJoined=False
+        oJoined=False
         while not self.joined:
-            # log_debug("joinning",logger=self.logID)
-            self.paramsServ_p.join(1)
-            if self.paramsServ_p.exitcode is not None:
-                print("paramsServ_p joined")
-                self.paramsServ_p.join(1)
+            # log_debug("joinning",logger=self.logID)            
+            while not (oJoined or pJoined):
+                self.paramsServ_p.join(5)
+                if self.paramsServ_p.exitcode!=None:
+                    pJoined=True
+                self.optBox_p.join(5)
+                if self.optBox_p.exitcode!=None:
+                    oJoined=True
+            if not oJoined:
                 if sys.platform == 'win32':
                     self.optBox_p.terminate()
                     print("optBox_p terminate")
                     self.joined=True
                 else:
-                    self.optBox_p.join(2)
-                    if self.optBox_p.exitcode is not None:
-                        print("optBox_p joined")
+                    self.optBox_p.join(6)
+                    if self.optBox_p.exitcode==None:
+                        self.optBox_p.terminate()
+                        print("optBox_p terminate")
                         self.joined=True
-            time.sleep(1)
-
+            if not pJoined:
+                if sys.platform == 'win32':
+                    self.paramsServ_p.terminate()
+                    print("paramsServ_p terminate")
+                    self.joined=True
+                else:
+                    self.paramsServ_p.join(6)
+                    if self.paramsServ_p.exitcode==None:
+                        self.paramsServ_p.terminate()
+                        print("paramsServ_p terminate")
+        self.enableInput(True)
+        configure_item("Stop", enabled=False)
+        set_item_label("Stop","Stop")        
     '''
     def query(self,sender, data):
         show_item("Plot Window")
@@ -219,7 +236,7 @@ class pServGui:
             self.drawHist()
 
     def showGUI(self):
-        with window("fit_Window",width=777,height=450,x_pos=232,y_pos=0):            
+        with window("fit_Window",width=777,height=450,x_pos=232,y_pos=0):
             add_plot("Fittness", height=-1)
         with window("fitGoodness_Window",width=777,height=255,x_pos=232,y_pos=453):
             add_plot("Fit_Goodness", height=-1,xaxis_time=True)

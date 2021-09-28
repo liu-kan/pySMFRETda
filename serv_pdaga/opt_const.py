@@ -1,6 +1,6 @@
-MIN_E, MAX_E = 0.06, 0.96
-MIN_K, MAX_K = 0, 1000000
-MIN_V, MAX_V = 0, 100
+MIN_E, MAX_E = 0.02, 0.98
+MIN_K, MAX_K = 0, 20000
+MIN_V, MAX_V = 0.01, 100
 
 n_gen=1000
 cxpb=0.45
