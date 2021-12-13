@@ -47,7 +47,7 @@ def duplicateValArray(a,b):
 
 
 
-def prepHdf5(full_fname,logger,comm=None):
+def prepHdf5(full_fname,logger,cut_burst=-1,comm=None):
     time_bin = 1e-3  # 1 ms
     loginfo(comm,logger,'''
     ===========================================
@@ -108,20 +108,29 @@ def prepHdf5(full_fname,logger,comm=None):
     bursts = d_fret_mix.mburst[0]
     # logger.info("mes time {}s".format(d.time_max-d.time_min))
     loginfo(comm,logger,"mes time {}s".format(d.time_max-d.time_min))
-    loginfo(comm,logger,"Number of bursts: #{}".format(bursts.num_bursts))
+    print("Number of bursts: #{}".format(bursts.num_bursts))
     # logger.info("Number of bursts: #{}".format(bursts.num_bursts))
     mask_dd = d.get_ph_mask(ph_sel=Ph_sel(Dex='Dem'))   # donor excitation, donor emission
     mask_ad = d.get_ph_mask(ph_sel=Ph_sel(Dex='Aem'))   # donor excitation, acceptor emission
     mask_aa = d.get_ph_mask(ph_sel=Ph_sel(Aex='Aem'))   # acceptor excitation, acceptor emission
-    timesad=times[mask_ad]
+    # timesad=times[mask_ad]
+    # print(type(times),type(mask_dd))
+    if cut_burst==0:
+        cut_burst = int(float(input("# of burst to cut:")))
+    elif cut_burst==-1:
+        cut_burst=bursts.num_bursts
     sub_bursts_l = []
     bleachingBurst=0
     # bext.burst_data(d_fret_mix)
-    for burst in bursts:
-        msburst=times[burst.istart:burst.istop+1]
-        m_dd=mask_dd[burst.istart:burst.istop+1]
-        m_ad=mask_ad[burst.istart:burst.istop+1]
-        m_aa=mask_aa[burst.istart:burst.istop+1]
+    chunkLen=cut_burst
+    for bidx in range(chunkLen):
+        burst = bursts[bidx]
+        # print(burst[0])
+        # print(burst.istart[0],burst.istop[0]+1)
+        msburst=times[burst.istart[0]:burst.istop[0]+1]
+        m_dd=mask_dd[burst.istart[0]:burst.istop[0]+1]
+        m_ad=mask_ad[burst.istart[0]:burst.istop[0]+1]
+        m_aa=mask_aa[burst.istart[0]:burst.istop[0]+1]
         
         avgdd=np.mean(msburst[m_dd])*d.clk_p*1e3
         avgda=np.mean(msburst[m_ad])*d.clk_p*1e3
@@ -130,8 +139,8 @@ def prepHdf5(full_fname,logger,comm=None):
             bleachingBurst=bleachingBurst+1
             continue
         # Compute binning of current bursts
-        sub_bursts_l.append(mburst(istart=burst.istart, istop=burst.istop,
-                                    start=burst.start, stop=burst.stop))
+        sub_bursts_l.append(mburst(istart=burst.istart[0], istop=burst.istop[0],
+                                    start=burst.start[0], stop=burst.stop[0]))
     # fBursts=Bursts.from_list(sub_bursts_l)    
     loginfo(comm,logger,"bleachingBurst:{}".format(bleachingBurst))
     # logger.info("bleachingBurst:{}".format(bleachingBurst))
@@ -224,7 +233,10 @@ def prepHdf5(full_fname,logger,comm=None):
     T_burst_duration=np.asarray(T_burst_duration,dtype=np.float64)
     loginfo(comm,logger,"mask_ad.dtype{}".format(mask_ad.dtype))
     print("bg_ad_rate",bg_ad_rate)
-    return sub_bursts_l,times,mask_ad,mask_dd,T_burst_duration,SgDivSr,bg_ad_rate,bg_dd_rate,d.clk_p
+    return sub_bursts_l,times[0:(bursts[chunkLen-1].istop)[0]+1], \
+        mask_ad[0:(bursts[chunkLen-1].istop)[0]+1], \
+        mask_dd[0:(bursts[chunkLen-1].istop)[0]+1], \
+        T_burst_duration,SgDivSr,bg_ad_rate,bg_dd_rate,d.clk_p
 
 def savedata(comm,logger,dictdata,filename="pdampi.dat"):
     # p=pathlib.Path(pathlib.Path.home(),"tmp",filename)    
@@ -270,7 +282,7 @@ def saveHDF5(savefn,sub_bursts_l,times,mask_ad,mask_dd,T_burst_duration,SgDivSr,
     v=f['/clk_p']
     print('delta clk_p', clk_p-v[0])
     v=f['T_burst_duration']
-    print('delta T_burst_duration', T_burst_duration[1000]-v[1000])
+    print('delta T_burst_duration', T_burst_duration[1]-v[1])
     f.close()
 
 if __name__ == '__main__':

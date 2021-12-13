@@ -45,7 +45,7 @@ class paramsServ():
         sys_platform=sys.platform
         while(running):
             # print("loop start")
-            if stopflag.value>1:
+            if stopflag.value>len(clients.keys()):
                 running=False
                 break
             if sys_platform == 'win32':
@@ -84,8 +84,12 @@ class paramsServ():
                 try:
                     ii , ind_ , self.bestcs= qO.get(False) #TODO change proto to allow ord('p') fail and retry later.                    
                 except queue.Empty:
-                    # print("params no ready")
-                    pb_ga.idx=-1
+                    if stopflag.value >=1:
+                        print("stopflag.value: ",stopflag.value)
+                        pb_ga.idx=-2
+                        stopflag.value+=1
+                    else:
+                        pb_ga.idx=-1
                     s1.send(pb_ga.SerializeToString())
                     continue
                 # ind_=[random.random()]*(s_n*(s_n+1))

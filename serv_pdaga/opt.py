@@ -48,10 +48,9 @@ class opt_toobox():
         # self.toolbox.register("mate", tools.cxTwoPoint)
         self.toolbox.register("mate", tools.cxBlend, alpha=0.32)
         # self.toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.2)
-        self.toolbox.register("mutate", tools.mutPolynomialBounded, eta=20, low=mutLow, up=mutUp, indpb=0.2)        
-        # self.toolbox.register("select", tools.selBest)
-        # self.toolbox.register("select", tools.selSPEA2)        
+        self.toolbox.register("mutate", tools.mutPolynomialBounded, eta=20, low=mutLow, up=mutUp, indpb=0.2)
         self.toolbox.register("select", tools.selNSGA2)
+        # self.toolbox.register("select", tools.selBest)
         self.bestcs=3.2E32
     def run(self,stopflag,q,ind_num=0,NGEN=n_gen,CXPB=cxpb,MUTPB=mutpb,topNum=top_num):
         self.ind_num=ind_num
@@ -78,7 +77,7 @@ class opt_toobox():
         for gen in range(NGEN):
             # Select the next generation individuals
             # tops=tools.selBest(pop, topNum)
-            selNum=min(int(len(pop)*4/5),len(pop)-topNum)
+            selNum=int(len(pop)*3/4)
             selected= self.toolbox.select(pop, selNum)
             newRandPop=self.toolbox.population(n=len(pop)-selNum)
             selected.extend(newRandPop)

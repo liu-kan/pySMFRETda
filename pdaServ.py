@@ -72,9 +72,12 @@ if __name__ == '__main__':
             paramsServ_p.join(5)
             if paramsServ_p.exitcode!=None:
                 pJoined=True
+                print('pJoined=True')
             optBox_p.join(5)
             if optBox_p.exitcode!=None:
                 oJoined=True
+                print('oJoined=True')
+        stopFlag.value=1
         if not oJoined:
             if sys.platform == 'win32':
                 optBox_p.terminate()
@@ -87,5 +90,6 @@ if __name__ == '__main__':
                 paramsServ_p.terminate()
                 print("paramsServ_p terminate")
             else:
+                print("waiting for paramsServ_p joined")
                 paramsServ_p.join()
                 print("paramsServ_p joined")

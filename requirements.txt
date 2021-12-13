@@ -1,3 +1,9 @@
+wheel>=0.34.2
 future>=0.18.2
-h5py==2.10.0
+h5py>=2.10.0
 dearpygui>0.6.122, <0.6.900
+protobuf>=3.19.1
+nanomsg>=1.0
+numpy>=1.21.4
+Cython>=0.29.25
+deap>=1.3.0

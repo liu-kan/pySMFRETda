@@ -67,7 +67,7 @@ def ptu2hdf5(f,fsave):
 
     description = 'This is a fake dataset which mimics smFRET data.'
 
-    author = 'kk'
+    author = 'liu kan'
     author_affiliation = 'Name of Research Institution'
     identity = dict(
         author=author,

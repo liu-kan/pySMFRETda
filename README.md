@@ -38,6 +38,7 @@ ImportError: cannot import name 'normpdf' from 'matplotlib.mlab' (/home/liuk/min
 ```
 Build [FRETBursts](https://github.com/OpenSMFS/FRETBursts) from [@tritemio](https://github.com/tritemio) in [my repository](https://github.com/liu-kan/FRETBursts), which replace mpl.normpdf with scipy.stats.norm.pdf.
 ```bash
+pip3 install -r requirements.txt
 pip3 uninstall fretbursts # or conda uninstall fretbursts
 git clone --depth=1 https://github.com/liu-kan/FRETBursts.git
 cd FRETBursts

@@ -63,12 +63,12 @@ python setup.py build_ext --inplace --compiler=msvc
 python setup.py install
 ```
 
-### deap (VC++) and DearPyGUI
+### deap (VC++) and DearPyGUIv0.6
 * Clone [a patched deap](https://github.com/liu-kan/deap) branch, which has merge [PR 76](https://github.com/DEAP/deap/pull/76) from [@cmd-ntrf](https://github.com/cmd-ntrf)
 * Install deap in Anaconda Command Prompt with pyda environment, by
 ```bash
 python setup.py install
-pip install dearpygui
+pip install dearpygui>0.6.122,<0.6.900
 ```
 ---------------------------------------------------
 ## FRETBursts (only if you use untils/*.py)

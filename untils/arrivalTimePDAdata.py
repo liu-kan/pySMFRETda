@@ -1,6 +1,6 @@
 
 # coding: utf-8
-import copy
+import copy,argparse
 import logging
 
 import numpy as np
@@ -9,13 +9,14 @@ from scipy import interpolate
 # sns = init_notebook()
 from data import  prepData
 
-def burstBin(full_fname,savefn='pdampi.dat',logname="pdampilogger.log"):      
+def burstBin(full_fname,cut_burst,savefn='pdampi.dat',logname="pdampilogger.log"):      
     times_s=0
     mask_ad_s=0
     logging.basicConfig(filename=logname,level=0)
     logger = logging.getLogger('pda')
     comm=None
-    sub_bursts_l,times,mask_ad,mask_dd,T_burst_duration,SgDivSr,bg_ad_rate,bg_dd_rate,clk_p=prepData.prepHdf5(full_fname,logger)
+    sub_bursts_l,times,mask_ad,mask_dd,T_burst_duration,SgDivSr,bg_ad_rate,bg_dd_rate,\
+        clk_p=prepData.prepHdf5(full_fname,logger,cut_burst)
     # burstlen=len(sub_bursts_l)
     # chunkLists=list(prepData.chunks(range(burstlen), clsize))
     # testrank=3
@@ -39,29 +40,27 @@ def burstBin(full_fname,savefn='pdampi.dat',logname="pdampilogger.log"):
         bg_ad_rate,bg_dd_rate )
 
 def usage():  
-    print("Usage:%s -i inputfilename.hf5 -o outputfilename.hdf5" % sys.argv[0])
+    print("Usage: python3 %s -i inputfilename.hf5 -o outputfilename.hdf5 [-c numberOfBurstToSave]" % sys.argv[0])
+
+def cmdargs():
+    parser = argparse.ArgumentParser(description='A preprocessor of TCSPC smFRET HDF5 files',
+            formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-o','--output', default='', help="Output file path")
+    parser.add_argument('-i','--input', default='', help="Input file path")
+    parser.add_argument('-c','--cut_burst', default=-1, type=int, \
+                        help="# of burst, when it's -1(default), include all; when it's 0, wait for your input.")    
+    return parser.parse_args()
 
 if __name__ == '__main__':
-    import sys,getopt
-    dbname=''
-    savefn=''
-    try:  
-        opts, args = getopt.getopt(sys.argv[1:], "o:i:")  
-        for o, v in opts: 
-            if o in ("-o"):
-                savefn = v
-            if o in ("-i"):
-                dbname=v
-    except getopt.GetoptError:  
-        # print help information and exit:  
-        print("getopt error!")    
-        usage()    
-        sys.exit(1)
+    args = cmdargs()
+    import sys
+    dbname=args.input
+    savefn=args.output
     if len(dbname)<1:
         usage()    
         sys.exit(1)    
-    if len(savefn)>1:     
-        burstBin(dbname,savefn)
+    if len(savefn)>0:     
+        burstBin(dbname,args.cut_burst,savefn)
     else:
-        burstBin(dbname)
+        burstBin(dbname,args.cut_burst)
 
