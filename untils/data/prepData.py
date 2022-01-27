@@ -171,6 +171,7 @@ def prepHdf5(full_fname,logger,cut_burst=-1,comm=None):
         counts_dd = len(msburst[m_dd])
         counts_ad = len(msburst[m_ad])
         counts_aa = len(msburst[m_aa])
+        # print(counts_ad,counts_dd,counts_aa)
         T=(msburst[-1]-msburst[0])*d.clk_p
         T_burst_duration.append(T)
         # pr=(counts_ad / (counts_dd*gamma + counts_ad)).tolist()
@@ -236,7 +237,7 @@ def prepHdf5(full_fname,logger,cut_burst=-1,comm=None):
     return sub_bursts_l,times[0:(bursts[chunkLen-1].istop)[0]+1], \
         mask_ad[0:(bursts[chunkLen-1].istop)[0]+1], \
         mask_dd[0:(bursts[chunkLen-1].istop)[0]+1], \
-        T_burst_duration,SgDivSr,bg_ad_rate,bg_dd_rate,d.clk_p
+        T_burst_duration,SgDivSr,bg_ad_rate,bg_dd_rate,d.clk_p,F_G,F_RT
 
 def savedata(comm,logger,dictdata,filename="pdampi.dat"):
     # p=pathlib.Path(pathlib.Path.home(),"tmp",filename)    
@@ -252,7 +253,7 @@ def savedata(comm,logger,dictdata,filename="pdampi.dat"):
     print ("save data at ",p.resolve())
     return sbuf
 
-def saveHDF5(savefn,sub_bursts_l,times,mask_ad,mask_dd,T_burst_duration,SgDivSr,clk_p,bg_ad_rate,bg_dd_rate):
+def saveHDF5(savefn,sub_bursts_l,times,mask_ad,mask_dd,T_burst_duration,SgDivSr,clk_p,bg_ad_rate,bg_dd_rate,F_G,F_RT):
     print("clk_p",clk_p)
     f=h5py.File(savefn,"w")
     dt=h5py.special_dtype(vlen=str)
@@ -275,6 +276,8 @@ def saveHDF5(savefn,sub_bursts_l,times,mask_ad,mask_dd,T_burst_duration,SgDivSr,
     f.create_dataset('T_burst_duration',
                      data=T_burst_duration, dtype=np.float32)
     f.create_dataset('SgDivSr', data=SgDivSr, dtype=np.float32)
+    f.create_dataset('F_D', data=F_G, dtype=np.float32)
+    f.create_dataset('F_A', data=F_RT, dtype=np.float32)
     f.create_dataset('clk_p',(1,), data=clk_p, dtype=np.float32)
     f.create_dataset('bg_ad_rate',(1,), data=bg_ad_rate, dtype=np.float32)
     f.create_dataset('bg_dd_rate',  (1,), data=bg_dd_rate,dtype=np.float32)

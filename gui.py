@@ -43,7 +43,7 @@ class pServGui:
 
     def stop_callback(self,sender, callback):
         configure_item("Stop", enabled=False)
-        set_item_label("Stop","Stopping, wait 4 1min")
+        set_item_label("Stop","Stopping, wait 4 min")
         self.stopFlag.value=1
         self.joinThr.join(60)
         if self.joinThr.is_alive():

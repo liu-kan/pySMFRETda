@@ -16,7 +16,7 @@ def burstBin(full_fname,cut_burst,savefn='pdampi.dat',logname="pdampilogger.log"
     logger = logging.getLogger('pda')
     comm=None
     sub_bursts_l,times,mask_ad,mask_dd,T_burst_duration,SgDivSr,bg_ad_rate,bg_dd_rate,\
-        clk_p=prepData.prepHdf5(full_fname,logger,cut_burst)
+        clk_p,F_G,F_RT=prepData.prepHdf5(full_fname,logger,cut_burst)
     # burstlen=len(sub_bursts_l)
     # chunkLists=list(prepData.chunks(range(burstlen), clsize))
     # testrank=3
@@ -27,9 +27,9 @@ def burstBin(full_fname,cut_burst,savefn='pdampi.dat',logname="pdampilogger.log"
     prepData.loginfo(comm,logger,"times[-1] {} before b".format(times[-1]))    
     prepData.loginfo(comm,logger,"mask_ad[4356] {} before b".format(mask_ad[4356]))  
     prepData.loginfo(comm,logger,"mask_ad[-1] {} before b".format(mask_ad[-100:-1]))          
-    dictdata=dict(bursts=sub_bursts_l,times=times,mask_ad=mask_ad,mask_dd=mask_dd,\
-        T_burst_duration=T_burst_duration,SgDivSr=SgDivSr,clk_p=clk_p,\
-        bg_ad_rate=bg_ad_rate,bg_dd_rate=bg_dd_rate) 
+    # dictdata=dict(bursts=sub_bursts_l,times=times,mask_ad=mask_ad,mask_dd=mask_dd,\
+    #     T_burst_duration=T_burst_duration,SgDivSr=SgDivSr,clk_p=clk_p,\
+    #     bg_ad_rate=bg_ad_rate,bg_dd_rate=bg_dd_rate,F_G=F_G,F_RT=F_RT) 
     # sbuf=prepData.savedata(comm,logger,dictdata,savefn)
     # print("Data size is ",sbuf," bytes!")
     # prepData.loginfo(comm,logger,"Data size is {} bytes!".format(sbuf))    
@@ -37,7 +37,7 @@ def burstBin(full_fname,cut_burst,savefn='pdampi.dat',logname="pdampilogger.log"
     prepData.saveHDF5( savefn, \
         sub_bursts_l,times,mask_ad,mask_dd,\
         T_burst_duration,SgDivSr,clk_p,\
-        bg_ad_rate,bg_dd_rate )
+        bg_ad_rate,bg_dd_rate,F_G,F_RT)
 
 def usage():  
     print("Usage: python3 %s -i inputfilename.hf5 -o outputfilename.hdf5 [-c numberOfBurstToSave]" % sys.argv[0])
